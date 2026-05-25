@@ -17,6 +17,12 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Runtime data (json-server)
+db.json
+
+# Claude Code local overrides
+.claude/settings.local.json
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
