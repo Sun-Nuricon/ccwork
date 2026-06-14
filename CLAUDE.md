@@ -162,6 +162,12 @@ Vite 플러그인이 처리하며, `src/index.css`에서 `@theme`로 커스텀 �
 컴포넌트 클래스에 등장하는 `bg-card`, `text-muted-foreground`, `border-border` 등은
 모두 이 테마 토큰이다 — shadcn 류 명명 규약을 따르지만 shadcn 자체는 쓰지 않는다.
 
+**디자인 시스템**: 색상·타이포·간격·컴포넌트 규칙은 `docs/design-system/`에 있고, 토큰
+값의 단일 원천은 `docs/design-system/tokens.css`다. **스타일/className/CSS/Tailwind 클래스
+변경, 새 컴포넌트 작성 시 반드시 `design-system` 스킬을 먼저 거친다** — 스킬이 작업에 필요한
+문서만 자동 로드하고, 편집 후 `check-design-system` 훅이 규칙 위반을 검사한다(현재는
+advisory). 단, 현 `src/index.css` `@theme`(Pretendard/Boogaloo/라이트)는 디자인 기준(Dell 1996)과 달라 실제 토큰 교체는 후속 작업이다.
+
 ## 테스트 설정
 
 - Vitest + jsdom + Testing Library (`@testing-library/react`, `jest-dom`, `user-event`).
