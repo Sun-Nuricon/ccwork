@@ -11,17 +11,36 @@ React 19 + TypeScript + Vite 기반의 **노트 앱 실습 프로젝트**. 강�
 
 ## 자주 쓰는 명령
 
-| 명령어 | 설명 |
-|--------|------|
-| `npm run dev` | Vite (5173) + json-server (3001) 동시 실행 — 보통 이것만 쓰면 됨 |
-| `npm run server` | json-server만 단독 실행 (백엔드만 띄우고 싶을 때) |
-| `npm run build` | `tsc` 타입체크 후 Vite 프로덕션 빌드 |
-| `npm run lint` | ESLint 자동 수정 (`--fix` 포함) |
-| `npm run format` | Prettier 전체 포맷 |
-| `npm test` | Vitest 1회 실행 (jsdom 환경) |
-| `npm run test:watch` | Vitest watch 모드 |
+| 명령어               | 설명                                                             |
+| -------------------- | ---------------------------------------------------------------- |
+| `npm run dev`        | Vite (5173) + json-server (3001) 동시 실행 — 보통 이것만 쓰면 됨 |
+| `npm run server`     | json-server만 단독 실행 (백엔드만 띄우고 싶을 때)                |
+| `npm run build`      | `tsc` 타입체크 후 Vite 프로덕션 빌드                             |
+| `npm run lint`       | ESLint 자동 수정 (`--fix` 포함)                                  |
+| `npm run format`     | Prettier 전체 포맷                                               |
+| `npm test`           | Vitest 1회 실행 (jsdom 환경)                                     |
+| `npm run test:watch` | Vitest watch 모드                                                |
 
 단일 테스트 실행: `npx vitest run path/to/file.test.tsx` 또는 `-t "테스트 이름"`.
+
+## 커밋 / Git hook 규칙
+
+husky로 커밋 시점에 자동 검사가 걸린다 (`npm install` 시 `prepare: husky`로 설치됨).
+
+- **pre-commit** (`.husky/pre-commit`): `lint-staged`가 **스테이징된 파일만** 검사.
+  `*.{ts,tsx}`는 `eslint --fix` → `prettier --write`, `*.{css,json,md}`는 `prettier --write`.
+  ESLint 에러가 남으면 커밋이 막히고 변경은 자동 롤백된다.
+- **commit-msg** (`.husky/commit-msg`): `commitlint`가 메시지를 검사. 규칙은
+  `commitlint.config.mjs` 한 곳에서 관리한다 (`@commitlint/config-conventional` 기반).
+- **커밋 메시지 형식** — Conventional Commits + 추가 규칙:
+  - 제목 필수: `type: subject` (예: `feat: 노트 태그 추가`). type은 `feat`/`fix`/`docs`/
+    `refactor`/`test`/`chore` 등.
+  - 제목과 본문 사이 **빈 줄 필수**.
+  - **본문 필수, 비어있지 않은 줄 최소 2줄** (`body-min-lines` 커스텀 규칙).
+- 메시지에 한글이 들어가면 PowerShell 파이프(`|`) 인코딩이 깨지므로, 커밋은
+  `git commit -F <파일>` 처럼 파일로 메시지를 넘긴다.
+- 프로젝트는 ESM이다 (`package.json`의 `"type": "module"`). 새 설정 파일은 `.mjs` 또는
+  ESM `.js`로 작성한다. CommonJS가 필요하면 `.cjs` 확장자를 쓴다.
 
 ## 아키텍처 큰 그림
 
@@ -127,8 +146,8 @@ App.tsx (선택/생성 UI 상태만 보유)
 1. **Context 직접 호출 vs 콜백 주입이 섞임**:
    - `NoteList`/`NoteEditor`: 내부에서 `useNotes()`를 직접 호출.
    - `NoteItem`: `onDelete` 콜백을 props로 받음 (Context를 모름).
-   같은 트리 안에서 두 스타일이 공존한다. 재사용성이 필요한 leaf 컴포넌트는 콜백 방식,
-   화면 단위 컨테이너는 직접 훅 호출 — 라는 암묵적 규칙으로 보이지만 명시되어 있지 않다.
+     같은 트리 안에서 두 스타일이 공존한다. 재사용성이 필요한 leaf 컴포넌트는 콜백 방식,
+     화면 단위 컨테이너는 직접 훅 호출 — 라는 암묵적 규칙으로 보이지만 명시되어 있지 않다.
 
 2. **Export 방식**: `App.tsx`만 default export, 나머지는 named export.
 
@@ -154,6 +173,6 @@ Vite 플러그인이 처리하며, `src/index.css`에서 `@theme`로 커스텀 �
 - API URL은 `src/api/notes.ts`에 `http://localhost:3001`로 하드코딩됨. 포트를 바꾸려면
   `package.json`의 `dev`/`server` 스크립트와 함께 수정.
 - `src/components/NoteEditor.tsx`의 `useEffect`는 의도적으로 `eslint-disable-next-line
-  react-hooks/exhaustive-deps`로 deps 경고를 무시한다 (`notes` 배열을 deps에 넣으면
+react-hooks/exhaustive-deps`로 deps 경고를 무시한다 (`notes` 배열을 deps에 넣으면
   편집 중 폼이 덮어쓰이는 문제 회피). 이 패턴은 건드리지 말 것.
 - `db.json`은 json-server가 직접 쓰기/지우기 한다 — 테스트나 데모 후 변경이 남을 수 있음.
