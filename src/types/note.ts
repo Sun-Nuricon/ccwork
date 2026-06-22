@@ -4,5 +4,5 @@ export interface Note {
   content: string;
   createdAt: string;
   updatedAt: string;
-  // ❌ tags 필드는 아직 없음 — 강의에서 추가할 것
+  tags: string[]; // 기본값 []; 읽는 쪽은 항상 note.tags ?? []로 방어
 }
