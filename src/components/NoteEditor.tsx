@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNotes } from '../context/NotesContext';
+import { useTags } from '../hooks/useTags';
 import { TagList } from './TagList';
+import { TagInput } from './TagInput';
 
 interface NoteEditorProps {
   selectedNoteId: string | null;
@@ -15,7 +17,7 @@ export function NoteEditor({ selectedNoteId, isCreating, onDone }: NoteEditorPro
   const [saving, setSaving] = useState(false);
 
   const selectedNote = notes.find((n) => n.id === selectedNoteId);
-  const tags = selectedNote?.tags ?? [];
+  const { tags, addTag } = useTags(selectedNoteId, isCreating);
 
   // 선택된 노트가 바뀔 때 폼 동기화
   useEffect(() => {
@@ -89,9 +91,16 @@ export function NoteEditor({ selectedNoteId, isCreating, onDone }: NoteEditorPro
         className="w-full text-base text-foreground/70 bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/50 leading-relaxed"
       />
 
-      {/* 태그 영역 (read-only) */}
-      <div data-testid="tag-area" className="flex flex-wrap gap-2 mt-4">
-        <TagList tags={tags} />
+      {/* 태그 영역 */}
+      <div className="mt-4">
+        <div data-testid="tag-area" className="flex flex-wrap gap-2">
+          <TagList tags={tags} />
+        </div>
+        {selectedNoteId && (
+          <div className="mt-2">
+            <TagInput onAdd={addTag} />
+          </div>
+        )}
       </div>
 
       {/* 버튼 영역 */}

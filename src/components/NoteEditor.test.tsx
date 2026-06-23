@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { NoteEditor } from './NoteEditor';
 import { useNotes } from '../context/NotesContext';
 import type { Note } from '../types/note';
@@ -101,6 +102,50 @@ describe('NoteEditor', () => {
     const tagArea = screen.getByTestId('tag-area');
     expect(tagArea).toBeInTheDocument();
     expect(tagArea).toBeEmptyDOMElement();
+  });
+
+  it('should render the TagInput (placeholder "태그 입력 후 Enter") in edit mode when a note is selected', () => {
+    setNotes([makeNote({ id: 'n1', tags: [] })]);
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+
+    expect(screen.getByPlaceholderText('태그 입력 후 Enter')).toBeInTheDocument();
+  });
+
+  it('should call updateNote(id, { tags: ["react"] }) when typing "react{Enter}" in the TagInput of a selected note with no tags', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: [] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.type(screen.getByPlaceholderText('태그 입력 후 Enter'), 'react{Enter}');
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['react'] });
+  });
+
+  it('should call updateNote(id, { tags: ["react","study"] }) when typing "study{Enter}" in a note already tagged ["react"]', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: ['react'] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.type(screen.getByPlaceholderText('태그 입력 후 Enter'), 'study{Enter}');
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['react', 'study'] });
   });
 
   it('should not render the tag area at all when no note is selected and not creating', () => {
