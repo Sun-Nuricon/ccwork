@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Lint, Typecheck, Audit & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Audit dependencies
+        # 프로덕션 의존성(react/react-dom)만 감사한다. dev/빌드 도구
+        # 취약점은 배포 산출물에 포함되지 않으므로 게이트에서 제외한다.
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Test
+        run: npm test

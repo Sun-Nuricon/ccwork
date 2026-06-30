@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>notes-app — Architecture</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 2rem; max-width: 1200px; margin-inline: auto; background: #fafafa; color: #1a1a1a; }
+    body.dark { background: #1a1a1a; color: #e5e5e5; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    h1 { margin: 0; font-size: 1.5rem; }
+    h2 { margin-top: 3rem; font-size: 1.15rem; border-bottom: 1px solid currentColor; padding-bottom: .35rem; }
+    .meta { font-size: .8rem; opacity: .6; margin-right: 1rem; }
+    .toggle { padding: .4rem .8rem; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: .4rem; cursor: pointer; font-size: .85rem; }
+    .toggle:hover { opacity: .75; }
+    .mermaid { background: transparent; text-align: center; padding: 1rem 0; }
+    .legend { display: flex; gap: 1.5rem; font-size: .85rem; margin-top: .5rem; opacity: .75; flex-wrap: wrap; }
+    .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: .35rem; vertical-align: middle; border-radius: 2px; }
+    .l-entry::before { background: #d1e9ff; }
+    .l-comp::before { background: #d1f5d3; }
+    .l-ctx::before { background: #ffe7c2; border-radius: 50% !important; }
+    .l-api::before { background: #f5d1f0; transform: skew(-20deg); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>notes-app — Architecture</h1>
+    <div>
+      <span class="meta">생성: 2026-05-26T09:00:00+09:00</span>
+      <button class="toggle" onclick="toggleTheme()">Toggle theme</button>
+    </div>
+  </header>
+
+  <p style="opacity:.7; font-size:.9rem">
+    이 페이지는 <code>.claude/skills/mermaid-diagram</code> 스킬이 <code>src/</code>를 분석해 자동 생성한다.
+    재생성하려면 Claude Code에서 "아키텍처 다이어그램 다시 그려줘"라고 요청하면 된다.
+  </p>
+
+  <section>
+    <h2>1. Component Dependencies</h2>
+    <div class="legend">
+      <span class="l-entry">Entry / Page</span>
+      <span class="l-comp">Component</span>
+      <span class="l-ctx">Context</span>
+      <span class="l-api">API / Types</span>
+    </div>
+    <pre class="mermaid">
+flowchart TD
+  subgraph Entry["Entry"]
+    main["main.tsx"]
+    App["App.tsx"]
+  end
+  subgraph Components["Components"]
+    Layout["Layout"]
+    NoteList["NoteList"]
+    NoteEditor["NoteEditor"]
+    NoteItem["NoteItem"]
+  end
+  subgraph State["State"]
+    Ctx[("NotesContext")]
+  end
+  subgraph APILayer["API / Types"]
+    api[/"api/notes.ts"/]
+    Types[/"types/note.ts"/]
+  end
+
+  main --> App
+  App --> Layout
+  App --> NoteList
+  App --> NoteEditor
+  NoteList --> NoteItem
+
+  App -.->|"NotesProvider"| Ctx
+  NoteList -.->|"useNotes()"| Ctx
+  NoteEditor -.->|"useNotes()"| Ctx
+  Ctx --> api
+  Ctx --> Types
+  api --> Types
+  NoteItem --> Types
+
+  classDef entry fill:#d1e9ff,stroke:#4a90d9,color:#0a3a6b
+  classDef comp fill:#d1f5d3,stroke:#5cb85c,color:#1f5e1f
+  classDef ctx fill:#ffe7c2,stroke:#f0a040,color:#7a4a00
+  classDef api fill:#f5d1f0,stroke:#c060b0,color:#5a1a55
+  class main,App entry
+  class Layout,NoteList,NoteEditor,NoteItem comp
+  class Ctx ctx
+  class api,Types api
+    </pre>
+  </section>
+
+  <section>
+    <h2>2. State Flow — 노트 저장 시나리오</h2>
+    <pre class="mermaid">
+sequenceDiagram
+  actor User as 사용자
+  participant Editor as NoteEditor
+  participant Ctx as NotesContext
+  participant API as api/notes.ts
+  participant Server as json-server (3001)
+
+  User->>Editor: 제목/내용 입력 + 저장 클릭
+  Editor->>Editor: handleSave() — 검증
+  alt 제목 비어있음
+    Editor-->>User: console.error
+  else 검증 통과
+    Editor->>Ctx: createNote(title, content)
+    Ctx->>API: createNote({title, content})
+    API->>Server: POST /notes (+ createdAt/updatedAt)
+    Server-->>API: 새 Note (id 포함)
+    API-->>Ctx: Note
+    Ctx->>Ctx: setNotes(prev => [...prev, newNote])
+    Ctx-->>Editor: 리렌더 (notes 변경)
+    Editor->>Editor: onDone() — 편집 모드 종료
+  end
+    </pre>
+  </section>
+
+  <section>
+    <h2>3. State Flow — 초기 로딩</h2>
+    <pre class="mermaid">
+sequenceDiagram
+  participant App as App.tsx
+  participant Provider as NotesProvider
+  participant API as api/notes.ts
+  participant Server as json-server
+
+  App->>Provider: 마운트
+  Provider->>Provider: useEffect (mount)
+  Provider->>API: fetchNotes()
+  API->>Server: GET /notes
+  alt 성공
+    Server-->>API: Note[]
+    API-->>Provider: Note[]
+    Provider->>Provider: setNotes + setLoading(false)
+  else 실패
+    Server-->>API: error
+    API-->>Provider: throw Error
+    Provider->>Provider: setError + setLoading(false)
+  end
+    </pre>
+  </section>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    window.__mermaid = mermaid;
+    const saved = localStorage.getItem('arch-theme') || 'default';
+    if (saved === 'dark') document.body.classList.add('dark');
+    mermaid.initialize({ startOnLoad: true, theme: saved, securityLevel: 'loose' });
+
+    window.toggleTheme = () => {
+      const isDark = document.body.classList.toggle('dark');
+      const theme = isDark ? 'dark' : 'default';
+      localStorage.setItem('arch-theme', theme);
+      location.reload();
+    };
+  </script>
+</body>
+</html>

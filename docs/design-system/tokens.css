@@ -1,0 +1,72 @@
+/* ============================================================================
+ * tokens.css — 디자인 시스템 토큰의 단일 원천 (Source of Truth)
+ * ----------------------------------------------------------------------------
+ * 이 파일이 모든 토큰 "값"의 권위다. colors.md / typography.md / layout.md 의
+ * 표는 설명용 미러일 뿐, 값이 충돌하면 이 파일이 이긴다.
+ *
+ * 형식: Tailwind v4 `@theme` 블록 — 그대로 복사해 `src/index.css`에 적용 가능.
+ * 단, 현재 `src/index.css`의 @theme(Pretendard/Boogaloo/라이트 그레이)는 아직
+ * 교체 전이다. 이 파일은 "지향할 기준"이며, 실제 교체는 후속 구현 작업이다.
+ *
+ * 기준 디자인: Dell December 1996 (검정 액자 프레임 + 플랫 컬러블록 + 시스템 폰트)
+ * ============================================================================ */
+
+@theme {
+  /* --- Brand & Accent --------------------------------------------------- */
+  --color-primary: #e91d2a; /* Dell Red — CTA 패널 + 전화번호 전용 */
+  --color-on-primary: #ffffff; /* Dell Red 위 텍스트 */
+  --color-yellow-sticker: #fcc20f; /* BUY a DELL 탭, NEW! 버스트 */
+  --color-purple-stripe: #6a26a4; /* BUY a DELL 스티커 내부 액센트 */
+
+  /* --- Surface ---------------------------------------------------------- */
+  --color-frame-ink: #000000; /* 페이지 프레임, 배너, 버튼 채움, 1px 헤어라인 */
+  --color-canvas: #ffffff; /* 프레임 안쪽 흰 표면, 타이틀바, 내비 배경 */
+
+  /* --- Text ------------------------------------------------------------- */
+  --color-ink: #000000; /* 본문·헤딩·방문 전 링크 (순수 검정) */
+  --color-link: #0000ee; /* 클래식 Mosaic/Netscape 링크 블루 */
+
+  /* --- Ribbon-Card Tint Family (제품군별 1색) --------------------------- */
+  --color-tint-olive: #8e8a25; /* DIMENSION DESKTOPS eyebrow */
+  --color-tint-sage: #b3bd95; /* Latitude Notebooks */
+  --color-tint-salmon: #d77a7a; /* OptiPlex DESKTOP / GX Series */
+  --color-tint-peach: #e6915d; /* Dimension / OptiPlex Gs */
+  --color-tint-lime: #c0d4a7; /* OptiPlex G Series */
+  --color-tint-sky: #9ab6c8; /* Dellware */
+  --color-tint-steel: #a5b8c0; /* Dimension XPS Pro */
+  --color-tint-periwinkle: #8c9ae0; /* PowerEdge Servers */
+
+  /* --- Fonts ------------------------------------------------------------ */
+  /* UI는 sans, 본문은 serif — 1996 타이포의 시그니처(현대와 정반대) */
+  --font-display: 'Arial Black', Helvetica, system-ui, sans-serif; /* 디스플레이 헤딩(900) */
+  --font-sans: 'Helvetica', Arial, system-ui, sans-serif; /* UI·버튼·라벨(Bold) */
+  --font-serif: 'Times New Roman', Times, serif; /* 본문 전체 */
+
+  /* --- Spacing (4px 베이스, 2/6/10 중간값) ------------------------------ */
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-s: 6px;
+  --spacing-sm: 8px;
+  --spacing-m: 10px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+  --spacing-section-sm: 32px;
+  --spacing-section: 40px;
+  --spacing-section-lg: 48px;
+
+  /* --- Radius (사각 또는 원형, 그 사이 단계 없음) ----------------------- */
+  --radius-none: 0px; /* 보편 기본값 — 버튼·카드·인풋·프레임·리본 */
+  --radius-full: 9999px; /* 원형 award 씰 전용 */
+}
+
+/* ----------------------------------------------------------------------------
+ * 타입 계층 참고 (font-size/weight/line-height 조합 — Tailwind 유틸로 표현)
+ *   display    36px / 900 / 1.0    heading-1  24px / 900 / 1.05
+ *   heading-2  16px / 700 / 1.2    heading-3  14px / 700 / 1.2
+ *   body       14px / 400 / 1.4    body-sm    12px / 400 / 1.4
+ *   caption    11px / 400 / 1.35   button     12px / 700 / 1.0
+ *   ui-label   12px / 700 / 1.0
+ * 자세한 매핑은 typography.md 참조.
+ * -------------------------------------------------------------------------- */

@@ -12,10 +12,28 @@ node_modules/
 dist/
 dist-ssr/
 
+# Test coverage
+coverage/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Local env
 .env
 .env.local
 .env.*.local
+
+# Runtime data (json-server)
+db.json
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# oh-my-claudecode runtime artifacts (sessions, state, throttles)
+.omc/
 
 # Editor
 .vscode/*
