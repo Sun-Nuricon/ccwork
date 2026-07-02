@@ -6,7 +6,7 @@ const { updateNote, state } = vi.hoisted(() => ({
   state: { notes: [] as { id: string; tags: string[] }[] },
 }));
 
-vi.mock('../context/NotesContext', () => ({
+vi.mock('../note/NotesContext', () => ({
   useNotes: () => ({
     notes: state.notes,
     loading: false,

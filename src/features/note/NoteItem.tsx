@@ -1,4 +1,4 @@
-import { Note } from '../types/note';
+import { Note } from './note';
 
 interface NoteItemProps {
   note: Note;

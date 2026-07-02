@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 프로젝트 목적
 
 React 19 + TypeScript + Vite 기반의 **노트 앱 실습 프로젝트**. 강의/학습용 코드베이스이며,
-백엔드 대신 `json-server`로 REST API를 흉내 낸다. `src/types/note.ts`에 `tags` 필드가
+백엔드 대신 `json-server`로 REST API를 흉내 낸다. `src/features/note/note.ts`에 `tags` 필드가
 의도적으로 빠져 있고 주석으로 "강의에서 추가할 것"이라 명시돼 있는 등, 강의 진행에 맞춰
 점진적으로 기능을 추가하도록 설계되어 있다.
 
@@ -77,6 +77,23 @@ husky로 커밋 시점에 자동 검사가 걸린다 (`npm install` 시 `prepare
 전형적인 3계층 React 앱이지만 **상태 관리 라이브러리 없이 단일 Context**로 모든 노트
 상태를 들고 있다. 새 기능을 추가할 때 이 흐름을 그대로 따르는 게 중요하다.
 
+**디렉토리 구조 — 도메인 기반(feature-folder)**: 소스는 기술 레이어가 아니라 **도메인별로**
+묶는다. 같은 도메인의 컴포넌트·훅·API·타입·순수 로직을 한 폴더에 co-locate한다.
+
+```
+src/
+├─ App.tsx · main.tsx · index.css · test-setup.ts   ← 앱 진입/전역
+├─ components/  Layout.tsx                            ← 도메인 공용(앱 셸)
+└─ features/
+   ├─ note/  NotesContext · notes(api) · note(type) · NoteEditor · NoteItem · NoteList
+   └─ tag/   useTags · tags(순수 로직) · TagInput · TagList
+```
+
+- 새 도메인을 추가하면 `src/features/<domain>/` 폴더를 만들고 그 안에 관련 파일을 모은다.
+- 도메인 공용 UI(셸/레이아웃 등)만 `src/components/`에 둔다.
+- 도메인 간 참조는 상대 경로로 명시(예: `tag/useTags` → `../note/NotesContext`). 순환 금지.
+- 파일 네이밍은 종전 규약 유지(컴포넌트 `PascalCase.tsx`, 모듈 `camelCase.ts`).
+
 ```
 App.tsx (선택/생성 UI 상태만 보유)
   └─ NotesProvider              ← 서버 상태(notes, loading, error) + CRUD 액션
@@ -88,10 +105,10 @@ App.tsx (선택/생성 UI 상태만 보유)
 
 핵심 패턴:
 
-- **단방향 데이터 흐름**: 모든 노트 CRUD는 `src/context/NotesContext.tsx`의
+- **단방향 데이터 흐름**: 모든 노트 CRUD는 `src/features/note/NotesContext.tsx`의
   `addNote`/`editNote`/`removeNote`를 거친다. 컴포넌트는 `fetch`를 직접 부르지 않고
   반드시 `useNotes()` 훅을 통한다. `useNotes`는 Provider 밖에서 부르면 throw 한다.
-- **API 계층 분리**: HTTP 호출은 `src/api/notes.ts`에 모여 있고 Context가 이를 import.
+- **API 계층 분리**: HTTP 호출은 `src/features/note/notes.ts`에 모여 있고 Context가 이를 import.
   새 엔드포인트가 생기면 여기에 함수를 추가하고 Context에서 래핑한다.
   `createdAt`/`updatedAt`은 클라이언트가 ISO 문자열로 직접 채워서 보낸다 (서버는 단순 저장).
 - **선택 상태는 로컬**: 어느 노트가 선택됐는지(`selectedNoteId`)와 새 노트 작성 모드
@@ -131,7 +148,7 @@ App.tsx (선택/생성 UI 상태만 보유)
 
 ## API 호출 패턴
 
-- **단일 소스**: 모든 HTTP는 `src/api/notes.ts`에 모인다. 컴포넌트/Context는 `fetch`를
+- **단일 소스**: 모든 HTTP는 `src/features/note/notes.ts`에 모인다. 컴포넌트/Context는 `fetch`를
   직접 부르지 않는다.
 - **함수 시그니처 규칙**:
   - 비동기 함수, 반환 타입을 명시적으로 `Promise<...>`로 표기.
@@ -142,7 +159,7 @@ App.tsx (선택/생성 UI 상태만 보유)
   넣어 보낸다. 서버(json-server)는 단순 저장만 한다.
 - **HTTP 메서드 매핑**: 부분 수정은 PUT이 아닌 PATCH 사용.
 - **Context 래핑 규약**: API 함수를 Context가 한 번 더 감싸 `notes` state를 갱신한다.
-  새 엔드포인트를 만들면 ① `api/notes.ts`에 함수 추가 → ② `NotesContext`에 액션 추가
+  새 엔드포인트를 만들면 ① `features/note/notes.ts`에 함수 추가 → ② `NotesContext`에 액션 추가
   → ③ 컴포넌트는 `useNotes()`로만 접근하는 3단계를 그대로 따른다.
 
 ## 네이밍 패턴
@@ -152,7 +169,7 @@ App.tsx (선택/생성 UI 상태만 보유)
 - **CRUD 동사 통일**: API 레이어와 Context 액션 모두 `fetch / create / update / delete`
   로 통일한다 (`fetchNotes`, `createNote`, `updateNote`, `deleteNote`). `add`/`edit`/
   `remove` 같은 동의어를 새로 도입하지 않는다. Context에서 API를 부를 때는
-  `import * as api from '../api/notes'` 후 `api.createNote(...)` 식으로 네임스페이스를
+  `import * as api from './notes'` 후 `api.createNote(...)` 식으로 네임스페이스를
   분리한다 — 동일 이름이라도 충돌하지 않는다.
 - **이벤트 핸들러**:
   - Prop 이름은 `on + Verb` (`onSelect`, `onDelete`, `onDone`, `onNewNote`).
@@ -206,9 +223,9 @@ advisory). 단, 현 `src/index.css` `@theme`(Pretendard/Boogaloo/라이트)는 �
 
 ## 주의사항
 
-- API URL은 `src/api/notes.ts`에 `http://localhost:3001`로 하드코딩됨. 포트를 바꾸려면
+- API URL은 `src/features/note/notes.ts`에 `http://localhost:3001`로 하드코딩됨. 포트를 바꾸려면
   `package.json`의 `dev`/`server` 스크립트와 함께 수정.
-- `src/components/NoteEditor.tsx`의 `useEffect`는 의도적으로 `eslint-disable-next-line
+- `src/features/note/NoteEditor.tsx`의 `useEffect`는 의도적으로 `eslint-disable-next-line
 react-hooks/exhaustive-deps`로 deps 경고를 무시한다 (`notes` 배열을 deps에 넣으면
   편집 중 폼이 덮어쓰이는 문제 회피). 이 패턴은 건드리지 말 것.
 - `db.json`은 json-server가 직접 쓰기/지우기 한다 — 테스트나 데모 후 변경이 남을 수 있음.
