@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NoteEditor } from './NoteEditor';
-import { useNotes } from '../context/NotesContext';
-import type { Note } from '../types/note';
+import { useNotes } from './NotesContext';
+import type { Note } from './note';
 
-vi.mock('../context/NotesContext', () => ({
+vi.mock('./NotesContext', () => ({
   useNotes: vi.fn(),
 }));
 
@@ -146,6 +146,50 @@ describe('NoteEditor', () => {
     await user.type(screen.getByPlaceholderText('태그 입력 후 Enter'), 'study{Enter}');
 
     expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['react', 'study'] });
+  });
+
+  it('should render a delete button with aria-label "react 태그 삭제" in edit mode when a note tagged ["react"] is selected', () => {
+    setNotes([makeNote({ id: 'n1', tags: ['react'] })]);
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'react 태그 삭제' })).toBeInTheDocument();
+  });
+
+  it('should call updateNote(id, { tags: ["study"] }) when clicking the "react" chip\'s delete button on a note tagged ["react","study"]', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: ['react', 'study'] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'react 태그 삭제' }));
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['study'] });
+  });
+
+  it('should call updateNote(id, { tags: [] }) when deleting the last remaining tag chip on a note tagged ["react"]', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: ['react'] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'react 태그 삭제' }));
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: [] });
   });
 
   it('should not render the tag area at all when no note is selected and not creating', () => {

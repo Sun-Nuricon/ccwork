@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNotes } from '../context/NotesContext';
-import { useTags } from '../hooks/useTags';
-import { TagList } from './TagList';
-import { TagInput } from './TagInput';
+import { useNotes } from './NotesContext';
+import { useTags } from '../tag/useTags';
+import { TagList } from '../tag/TagList';
+import { TagInput } from '../tag/TagInput';
 
 interface NoteEditorProps {
   selectedNoteId: string | null;
@@ -17,7 +17,7 @@ export function NoteEditor({ selectedNoteId, isCreating, onDone }: NoteEditorPro
   const [saving, setSaving] = useState(false);
 
   const selectedNote = notes.find((n) => n.id === selectedNoteId);
-  const { tags, addTag } = useTags(selectedNoteId, isCreating);
+  const { tags, addTag, removeTag } = useTags(selectedNoteId, isCreating);
 
   // 선택된 노트가 바뀔 때 폼 동기화
   useEffect(() => {
@@ -94,7 +94,7 @@ export function NoteEditor({ selectedNoteId, isCreating, onDone }: NoteEditorPro
       {/* 태그 영역 */}
       <div className="mt-4">
         <div data-testid="tag-area" className="flex flex-wrap gap-2">
-          <TagList tags={tags} />
+          <TagList tags={tags} onRemove={removeTag} />
         </div>
         {selectedNoteId && (
           <div className="mt-2">

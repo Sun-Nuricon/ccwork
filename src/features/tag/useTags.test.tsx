@@ -6,7 +6,7 @@ const { updateNote, state } = vi.hoisted(() => ({
   state: { notes: [] as { id: string; tags: string[] }[] },
 }));
 
-vi.mock('../context/NotesContext', () => ({
+vi.mock('../note/NotesContext', () => ({
   useNotes: () => ({
     notes: state.notes,
     loading: false,
@@ -77,6 +77,61 @@ describe('useTags.addTag', () => {
 
     await act(async () => {
       result.current.addTag('react');
+    });
+
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});
+
+describe('useTags.removeTag', () => {
+  beforeEach(() => {
+    updateNote.mockReset();
+    updateNote.mockResolvedValue(undefined);
+    state.notes = [];
+  });
+
+  it('should call updateNote(id, { tags: ["study"] }) when removeTag("react") on a note tagged ["react","study"] in edit mode', () => {
+    state.notes = [{ id: '1', tags: ['react', 'study'] }];
+    const { result } = renderHook(() => useTags('1', false));
+
+    act(() => {
+      result.current.removeTag('react');
+    });
+
+    expect(updateNote).toHaveBeenCalledWith('1', { tags: ['study'] });
+  });
+
+  it('should call updateNote(id, { tags: [] }) when removing the last remaining tag "react"', () => {
+    state.notes = [{ id: '1', tags: ['react'] }];
+    const { result } = renderHook(() => useTags('1', false));
+
+    act(() => {
+      result.current.removeTag('react');
+    });
+
+    expect(updateNote).toHaveBeenCalledWith('1', { tags: [] });
+  });
+
+  it('should not call updateNote when removeTag("missing") targets a tag not in the list', () => {
+    state.notes = [{ id: '1', tags: ['react', 'study'] }];
+    const { result } = renderHook(() => useTags('1', false));
+
+    act(() => {
+      result.current.removeTag('missing');
+    });
+
+    expect(updateNote).not.toHaveBeenCalled();
+  });
+
+  it('should console.error and not throw when updateNote rejects', async () => {
+    state.notes = [{ id: '1', tags: ['react', 'study'] }];
+    updateNote.mockRejectedValue(new Error('Failed to update note'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useTags('1', false));
+
+    await act(async () => {
+      result.current.removeTag('react');
     });
 
     expect(errorSpy).toHaveBeenCalled();
