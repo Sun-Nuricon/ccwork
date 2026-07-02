@@ -5,7 +5,11 @@ import { parseTagInput, addTags } from '../lib/tags';
 export function useTags(
   selectedNoteId: string | null,
   isCreating: boolean,
-): { tags: string[]; addTag: (raw: string) => void } {
+): {
+  tags: string[];
+  addTag: (raw: string) => void;
+  removeTag: (tag: string) => void;
+} {
   const { notes, updateNote } = useNotes();
   const tags = notes.find((n) => n.id === selectedNoteId)?.tags ?? [];
 
@@ -21,5 +25,14 @@ export function useTags(
     }
   };
 
-  return { tags, addTag };
+  const removeTag = (tag: string) => {
+    const next = tags.filter((t) => t !== tag);
+    if (next.length === tags.length) return; // 대상 없음 → 저장하지 않음
+
+    if (!isCreating && selectedNoteId) {
+      updateNote(selectedNoteId, { tags: next }).catch((e) => console.error(e));
+    }
+  };
+
+  return { tags, addTag, removeTag };
 }

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TagList } from './TagList';
 
 describe('TagList', () => {
@@ -29,5 +30,31 @@ describe('TagList', () => {
     render(<TagList tags={['리액트', 'react study']} />);
     expect(screen.getByText('리액트')).toBeInTheDocument();
     expect(screen.getByText('react study')).toBeInTheDocument();
+  });
+
+  it('should render a delete button with aria-label "react 태그 삭제" for the "react" chip when onRemove is provided', () => {
+    render(<TagList tags={['react', 'study']} onRemove={() => {}} />);
+    expect(screen.getByRole('button', { name: 'react 태그 삭제' })).toBeInTheDocument();
+  });
+
+  it('should call onRemove("react") when the "react" chip\'s delete button is clicked', async () => {
+    const onRemove = vi.fn();
+    render(<TagList tags={['react', 'study']} onRemove={onRemove} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'react 태그 삭제' }));
+
+    expect(onRemove).toHaveBeenCalledWith('react');
+  });
+
+  it('should give the delete button hover-reveal classes (opacity-0, group-hover:opacity-100) on a group chip when onRemove is provided', () => {
+    render(<TagList tags={['react']} onRemove={() => {}} />);
+    const button = screen.getByRole('button', { name: 'react 태그 삭제' });
+    expect(button.className).toContain('opacity-0');
+    expect(button.className).toContain('group-hover:opacity-100');
+  });
+
+  it('should render no delete button (read-only) when onRemove is not provided', () => {
+    render(<TagList tags={['react', 'study']} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

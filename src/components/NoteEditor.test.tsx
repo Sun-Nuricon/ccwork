@@ -148,6 +148,50 @@ describe('NoteEditor', () => {
     expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['react', 'study'] });
   });
 
+  it('should render a delete button with aria-label "react 태그 삭제" in edit mode when a note tagged ["react"] is selected', () => {
+    setNotes([makeNote({ id: 'n1', tags: ['react'] })]);
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'react 태그 삭제' })).toBeInTheDocument();
+  });
+
+  it('should call updateNote(id, { tags: ["study"] }) when clicking the "react" chip\'s delete button on a note tagged ["react","study"]', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: ['react', 'study'] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'react 태그 삭제' }));
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: ['study'] });
+  });
+
+  it('should call updateNote(id, { tags: [] }) when deleting the last remaining tag chip on a note tagged ["react"]', async () => {
+    const user = userEvent.setup();
+    const updateNote = vi.fn().mockResolvedValue(undefined);
+    mockedUseNotes.mockReturnValue({
+      notes: [makeNote({ id: 'n1', tags: ['react'] })],
+      loading: false,
+      error: null,
+      createNote: vi.fn(),
+      updateNote,
+      deleteNote: vi.fn(),
+    });
+
+    render(<NoteEditor selectedNoteId="n1" isCreating={false} onDone={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'react 태그 삭제' }));
+
+    expect(updateNote).toHaveBeenCalledWith('n1', { tags: [] });
+  });
+
   it('should not render the tag area at all when no note is selected and not creating', () => {
     const note = makeNote({ id: 'n1', tags: ['react'] });
     setNotes([note]);
